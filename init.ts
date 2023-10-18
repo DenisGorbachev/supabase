@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createClient, SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-js'
+import { createClient, PostgrestError, SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-js'
 import { GenericSchema } from '@supabase/supabase-js/src/lib/types'
 
 let supabasePublic: SupabaseClient
@@ -35,12 +35,26 @@ export const createSupabase = <
   return createClient(supabaseUrl, supabaseKey, options)
 }
 
-export async function sb<T>(supabaseResult: Promise<{ data: T | null; error: Error | null }>): Promise<T> {
+/**
+ * `data` may be null (example: the system sends a Postgres query with maybeSingle() modifier, the server returns an empty array, the system returns null)
+ */
+export async function sb<T, E>(supabaseResult: Promise<{ data: T | null; error: E | null }>): Promise<T | null> {
   const { data, error } = await supabaseResult
   if (error) throw error
-  if (data === null) throw new Error('Supabase: data is null') // should never happen according to Supabase function definitions
   return data
 }
+
+export async function sbe<T, E>(supabaseResult: Promise<{ data: T | null; error: E | null }>): Promise<T> {
+  const data = await sb(supabaseResult)
+  if (data === null) throw new Error('Supabase: data is null')
+  return data
+}
+
+export type DbResult<T> = T extends PromiseLike<infer U> ? U : never
+
+export type DbResultOk<T> = T extends PromiseLike<{ data: infer U }> ? Exclude<U, null> : never
+
+export type DbResultErr = PostgrestError
 
 export interface SupabaseError {
   message: string

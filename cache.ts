@@ -1,16 +1,16 @@
 import { Cache } from '../utils/cache'
 import { getSupabasePrivate, isSupabaseError, sb } from './init'
 
-export async function setData<T>(path: string, data: T) {
+export async function setData(path: string, data: unknown) {
   const bucket = getSupabasePrivate().storage.from(cacheBucketId)
   await sb(bucket.upload(`${cacheFolder}/${path}`, JSON.stringify(data), { upsert: true }))
 }
 
-export async function getData<T>(path: string): Promise<T | undefined> {
+export async function getData(path: string): Promise<unknown | undefined> {
   try {
     const bucket = getSupabasePrivate().storage.from(cacheBucketId)
     const data = await sb(bucket.download(`${cacheFolder}/${path}`))
-    return JSON.parse(await data.text())
+    return data ? JSON.parse(await data.text()) : undefined
   } catch (error) {
     if (isSupabaseError(error) && notFoundMessages.includes(error.message)) {
       return undefined
