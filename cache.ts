@@ -1,4 +1,4 @@
-import { Cache } from '../utils/cache'
+import { CacheU } from '../utils/cache'
 import { getSupabasePrivate, isSupabaseError, sb } from './init'
 
 export async function setData(path: string, data: unknown) {
@@ -20,7 +20,7 @@ export async function getData(path: string): Promise<unknown | undefined> {
   }
 }
 
-export function getSupabaseCache(): Cache {
+export function getSupabaseCache(): CacheU {
   return {
     get: getData,
     set: setData,
